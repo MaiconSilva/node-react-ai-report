@@ -41,9 +41,9 @@ SQL Server
 ### Step 1: Clone and Start the Database
 
 ```bash
-# Clone the repository (if you haven't already)
-git clone <repo-url>
-cd ai-sql-reports
+# Clone the repository
+git clone https://github.com/MaiconSilva/node-react-ai-report.git
+cd node-react-ai-report
 
 # Start SQL Server with sample data
 docker-compose up -d
