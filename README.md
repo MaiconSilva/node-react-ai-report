@@ -1,6 +1,6 @@
-# AI SQL Reports POC
+# AI SQL Reporting Engine (POC)
 
-A natural language to SQL reporting proof-of-concept that lets you ask questions about your sales data in plain English and receive formatted table responses.
+Data-driven application that translates natural language into secure, executable SQL using RAG and AST-based validation, enabling controlled exploration of structured data. Designed to simulate real-world data exploration scenarios where safety, correctness, and performance are critical.
 
 ## Features
 
@@ -8,17 +8,27 @@ A natural language to SQL reporting proof-of-concept that lets you ask questions
 - **AI-Powered SQL Generation**: Uses OpenAI to generate SQL from natural language
 - **RAG (Retrieval Augmented Generation)**: Vector search on database schema for context-aware queries
 - **Security First**: SQL validation ensures only safe SELECT queries with TOP limits
+- **Controlled Execution**: Query validation, result limiting, and read-only database access ensure safe operations
 - **Real-time Results**: See the generated SQL and results instantly
 
 ## Architecture
 
 ```
-React (Frontend)
-    ↓
-NestJS (Backend)
-    ↓
-SQL Server (Docker) ← OpenAI (Embeddings + SQL Gen)
+React (UI)
+  ↓
+NestJS (API Layer)
+  ↓
+AI Pipeline (RAG + SQL Generation + Validation)
+  ↓
+SQL Server
 ```
+
+### Architecture Highlights
+
+- **Separation of Concerns**: Clear boundaries between SQL generation, validation, and execution
+- **Modular Services**: Independent modules for RAG, SQL generation, AST validation, and database execution
+- **Pipeline Data Flow**: Sequential processing with explicit stages (retrieval → generation → validation → execution)
+- **Defense in Depth**: Multiple security layers (AST validation, read-only permissions, timeout limits, TOP enforcement)
 
 ## Quick Start (First Time Setup)
 
@@ -42,7 +52,7 @@ docker-compose up -d
 docker-compose ps
 ```
 
-This starts SQL Server with sample sales data (100 customers, 50 products, 1000 orders).
+This starts SQL Server with sample structured data (100 customers, 50 products, 1000 orders).
 
 ### Step 2: Configure and Start the Backend
 
@@ -129,6 +139,26 @@ The application enforces strict security rules using **AST-based SQL parsing** (
 - **Query timeout**: 5-second execution limit
 - **Read-only connection**: Database connection is read-only
 
+## Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **RAG for schema context** | Provides relevant table/column context to reduce hallucinations and improve SQL accuracy |
+| **AST-based validation** | Structural SQL safety beyond regex — parses SQL into tree to verify SELECT-only, TOP presence, and forbidden patterns |
+| **Read-only execution** | Database layer enforces SELECT-only operations; connection string and SQL Server permissions prevent modifications |
+| **In-memory vector store** | Lightweight approach for POC; avoids external vector database complexity while demonstrating RAG capability |
+| **TOP requirement** | Forces result set limiting at the database level to prevent unbounded queries |
+| **Pipeline architecture** | Clear separation of concerns: retrieval → generation → validation → execution → formatting |
+
+## Performance
+
+- **Result Limiting**: `TOP` clause enforced on all queries to cap result size
+- **Query Timeout**: 5-second execution limit prevents long-running queries
+- **Indexed Schema**: Database indexes on foreign keys and frequently queried columns
+- **Lightweight Vector Search**: In-memory cosine similarity with pre-computed embeddings (no network round-trip)
+- **Connection Pooling**: Efficient database connection reuse via mssql library
+- **Minimal Payload**: API returns only necessary columns and limited row sets
+
 ## API Endpoints
 
 ### POST /setup
@@ -193,19 +223,33 @@ Ask a natural language question.
 
 ## How It Works
 
-1. **Setup Phase** (run once):
-   - Reads database schema
-   - Generates embeddings for tables, columns, and business rules
-   - Stores in in-memory vector store
+### Setup Phase (run once)
 
-2. **Query Phase** (per question):
-   - User asks a natural language question
-   - Vector search finds relevant schema context
-   - OpenAI generates SQL using the context
-   - **AST-based SQL Validator** parses and validates the SQL structure
-   - Query executes against SQL Server (if validation passes)
-   - Results are formatted with AI-generated title/summary
-   - Response includes the generated SQL for transparency
+1. **Schema Reading**: Reads database schema (tables, columns, relationships)
+2. **Embedding Generation**: Creates vector embeddings for schema elements
+3. **Vector Store**: Stores embeddings in lightweight in-memory vector store
+
+### Query Pipeline (per question)
+
+```
+User Question
+  ↓
+Context Retrieval (RAG)
+  ↓
+SQL Generation (LLM)
+  ↓
+AST Validation
+  ↓
+Execution (Read-only)
+  ↓
+Formatting (Title + Summary)
+```
+
+1. **Context Retrieval (RAG)**: Vector search finds relevant schema context
+2. **SQL Generation**: LLM generates SQL using the retrieved context
+3. **AST Validation**: SQL is parsed and validated for structural safety
+4. **Execution**: Query runs against SQL Server with read-only restrictions
+5. **Formatting**: AI generates human-readable title and summary
 
 ## Technology Stack
 
