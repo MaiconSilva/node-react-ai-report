@@ -44,6 +44,20 @@ describe('SqlAstValidatorService', () => {
         );
         expect(result.valid).toBe(true);
       });
+
+      it('should accept UNION ALL with multiple TOP clauses', () => {
+        const result = service.validate(
+          'SELECT TOP 100 * FROM customers UNION ALL SELECT TOP 100 * FROM orders UNION ALL SELECT TOP 100 * FROM products'
+        );
+        expect(result.valid).toBe(true);
+      });
+
+      it('should accept UNION with TOP clauses', () => {
+        const result = service.validate(
+          'SELECT TOP 50 name FROM customers UNION SELECT TOP 50 name FROM products'
+        );
+        expect(result.valid).toBe(true);
+      });
     });
 
     describe('invalid - not SELECT', () => {

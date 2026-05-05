@@ -75,17 +75,74 @@ export class SqlAstValidatorService {
   /**
    * Transform SQL Server TOP syntax to LIMIT for parser compatibility
    * e.g., "SELECT TOP 100 * FROM table" -> "SELECT * FROM table LIMIT 100"
+   * Handles multiple SELECT statements (UNION ALL, subqueries, etc.)
    */
   private transformTopToLimit(sql: string): string {
-    // Match "SELECT TOP N" pattern (case insensitive)
-    const topMatch = sql.match(/SELECT\s+TOP\s+(\d+)\s+/i);
-    if (topMatch) {
-      const topValue = topMatch[1];
-      // Remove TOP N and add LIMIT N at the end
-      const withoutTop = sql.replace(/SELECT\s+TOP\s+\d+\s+/i, 'SELECT ');
+    // Match all "SELECT TOP N" patterns globally (case insensitive)
+    const topRegex = /SELECT\s+TOP\s+(\d+)\s+/gi;
+    const matches = [...sql.matchAll(topRegex)];
+
+    if (matches.length === 0) {
+      return sql;
+    }
+
+    // For single SELECT, simple transformation
+    if (matches.length === 1) {
+      const topValue = matches[0][1];
+      const withoutTop = sql.replace(topRegex, 'SELECT ');
       return `${withoutTop} LIMIT ${topValue}`;
     }
-    return sql;
+
+    // For multiple SELECTs (UNION ALL), we need to place LIMIT in each SELECT
+    // Transform: "SELECT TOP N ... UNION ALL SELECT TOP M ..." 
+    // Into:      "SELECT ... LIMIT N UNION ALL SELECT ... LIMIT M"
+    // Matches: UNION, UNION ALL, UNION DISTINCT (with surrounding whitespace)
+    const unionRegex = /\s+UNION\s+(?:ALL\s+|DISTINCT\s+)?/gi;
+    const unionMatches = [...sql.matchAll(unionRegex)];
+
+    if (unionMatches.length === 0) {
+      // No UNION, single SELECT with multiple TOPs - use first TOP
+      const topValue = matches[0][1];
+      const withoutTop = sql.replace(topRegex, 'SELECT ');
+      return `${withoutTop} LIMIT ${topValue}`;
+    }
+
+    // Process each SELECT segment (between UNIONs)
+    let currentPos = 0;
+    const segments: Array<{ sql: string; limit: string; union?: string }> = [];
+
+    for (let i = 0; i <= unionMatches.length; i++) {
+      const unionStart = i < unionMatches.length ? unionMatches[i].index! : sql.length;
+      const segment = sql.slice(currentPos, unionStart).trim();
+
+      // Extract TOP value from this segment
+      const topMatch = segment.match(/SELECT\s+TOP\s+(\d+)/i);
+      const limit = topMatch ? topMatch[1] : '100';
+
+      // Remove TOP from segment
+      const withoutTop = segment.replace(/SELECT\s+TOP\s+\d+/i, 'SELECT');
+
+      // Get the UNION clause for this segment (if not the last one)
+      const union = i < unionMatches.length ? unionMatches[i][0].trim() : undefined;
+
+      segments.push({ sql: withoutTop, limit, union });
+
+      // Move position past this UNION clause for next iteration
+      if (i < unionMatches.length) {
+        currentPos = unionStart + unionMatches[i][0].length;
+      }
+    }
+
+    // Reconstruct with LIMIT in each SELECT
+    let result = '';
+    for (let i = 0; i < segments.length; i++) {
+      result += segments[i].sql + ` LIMIT ${segments[i].limit}`;
+      if (segments[i].union) {
+        result += ' ' + segments[i].union + ' ';
+      }
+    }
+
+    return result.trim();
   }
 
   sanitize(sql: string): string {

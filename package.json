@@ -3,15 +3,21 @@
   "version": "1.0.0",
   "description": "Natural language to SQL reports POC",
   "scripts": {
-    "db:start": "docker-compose up -d",
+    "dev": "npm run db:start && npm run dev:parallel",
+    "dev:parallel": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\" --names \"BACKEND,FRONTEND\" --prefix-colors \"blue,green\"",
+    "db:start": "docker-compose up -d && npm run db:wait",
+    "db:wait": "echo 'Waiting for SQL Server...' && sleep 30 && echo 'SQL Server should be ready. Run npm run setup after services are up.'",
     "db:stop": "docker-compose down",
     "db:logs": "docker-compose logs -f sqlserver",
     "backend:install": "cd backend && npm install",
     "backend:dev": "cd backend && npm run start:dev",
     "frontend:install": "cd frontend && npm install",
     "frontend:dev": "cd frontend && npm run dev",
-    "install:all": "npm run backend:install && npm run frontend:install",
+    "install:all": "npm install && npm run backend:install && npm run frontend:install",
     "setup": "curl -X POST http://localhost:3000/setup"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   },
   "engines": {
     "node": ">=18.0.0"
