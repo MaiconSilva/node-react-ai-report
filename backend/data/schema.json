@@ -1,0 +1,471 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-05-05T14:32:03.103Z",
+  "connection": {
+    "type": "sqlserver",
+    "host": "localhost",
+    "port": 1433,
+    "database": "SalesDB"
+  },
+  "tables": [
+    {
+      "name": "customers",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "nullable": false,
+          "isPrimaryKey": true,
+          "isIdentity": true,
+          "description": "Primary key - auto-incrementing unique identifier (referenced by orders.customer_id)"
+        },
+        {
+          "name": "name",
+          "type": "nvarchar(100)",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Full name of the customer"
+        },
+        {
+          "name": "email",
+          "type": "nvarchar(100)",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Customer email address"
+        },
+        {
+          "name": "city",
+          "type": "nvarchar(50)",
+          "nullable": true,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "City of the customer"
+        },
+        {
+          "name": "state",
+          "type": "nvarchar(2)",
+          "nullable": true,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Two-letter state code"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": true,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "When the customer was first added"
+        }
+      ],
+      "primaryKey": [
+        "id"
+      ],
+      "foreignKeys": [],
+      "indexes": [
+        {
+          "name": "PK__customer__3213E83F3F392B5E",
+          "columns": [
+            "id"
+          ],
+          "type": "clustered"
+        },
+        {
+          "name": "UQ__customer__AB6E616419751C23",
+          "columns": [
+            "email"
+          ],
+          "type": "nonclustered"
+        },
+        {
+          "name": "idx_customers_city",
+          "columns": [
+            "city"
+          ],
+          "type": "nonclustered"
+        },
+        {
+          "name": "idx_customers_state",
+          "columns": [
+            "state"
+          ],
+          "type": "nonclustered"
+        }
+      ],
+      "description": "Contains customer information including name, email, and location (city/state)"
+    },
+    {
+      "name": "order_items",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "nullable": false,
+          "isPrimaryKey": true,
+          "isIdentity": true,
+          "description": "Primary key - auto-incrementing unique identifier"
+        },
+        {
+          "name": "order_id",
+          "type": "int",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "isForeignKey": true,
+          "referencedTable": "orders",
+          "referencedColumn": "id",
+          "description": "Foreign key to orders.id - which order this item belongs to"
+        },
+        {
+          "name": "product_id",
+          "type": "int",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "isForeignKey": true,
+          "referencedTable": "products",
+          "referencedColumn": "id",
+          "description": "Foreign key to products.id - which product was ordered"
+        },
+        {
+          "name": "quantity",
+          "type": "int",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Number of units ordered"
+        },
+        {
+          "name": "unit_price",
+          "type": "decimal",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Price per unit at time of order"
+        }
+      ],
+      "primaryKey": [
+        "id"
+      ],
+      "foreignKeys": [
+        {
+          "name": "FK__order_ite__produ__45F365D3",
+          "column": "product_id",
+          "referencedTable": "products",
+          "referencedColumn": "id"
+        },
+        {
+          "name": "FK__order_ite__order__44FF419A",
+          "column": "order_id",
+          "referencedTable": "orders",
+          "referencedColumn": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__order_it__3213E83FC34A98C5",
+          "columns": [
+            "id"
+          ],
+          "type": "clustered"
+        },
+        {
+          "name": "idx_order_items_order_id",
+          "columns": [
+            "order_id"
+          ],
+          "type": "nonclustered"
+        },
+        {
+          "name": "idx_order_items_product_id",
+          "columns": [
+            "product_id"
+          ],
+          "type": "nonclustered"
+        }
+      ],
+      "description": "Individual items within each order linking products to orders with quantity and price"
+    },
+    {
+      "name": "orders",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "nullable": false,
+          "isPrimaryKey": true,
+          "isIdentity": true,
+          "description": "Primary key - auto-incrementing unique identifier (referenced by order_items.order_id)"
+        },
+        {
+          "name": "customer_id",
+          "type": "int",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "isForeignKey": true,
+          "referencedTable": "customers",
+          "referencedColumn": "id",
+          "description": "Foreign key to customers.id - which customer placed this order"
+        },
+        {
+          "name": "order_date",
+          "type": "datetime",
+          "nullable": true,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Date when order was placed"
+        },
+        {
+          "name": "status",
+          "type": "nvarchar(20)",
+          "nullable": true,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Order status: pending, processing, completed, or cancelled"
+        },
+        {
+          "name": "total_amount",
+          "type": "decimal",
+          "nullable": true,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Total monetary value of the order"
+        }
+      ],
+      "primaryKey": [
+        "id"
+      ],
+      "foreignKeys": [
+        {
+          "name": "FK__orders__customer__4222D4EF",
+          "column": "customer_id",
+          "referencedTable": "customers",
+          "referencedColumn": "id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "PK__orders__3213E83F31DE058B",
+          "columns": [
+            "id"
+          ],
+          "type": "clustered"
+        },
+        {
+          "name": "idx_orders_customer_id",
+          "columns": [
+            "customer_id"
+          ],
+          "type": "nonclustered"
+        },
+        {
+          "name": "idx_orders_order_date",
+          "columns": [
+            "order_date"
+          ],
+          "type": "nonclustered"
+        },
+        {
+          "name": "idx_orders_status",
+          "columns": [
+            "status"
+          ],
+          "type": "nonclustered"
+        }
+      ],
+      "description": "Customer orders with order date, status, and total amount"
+    },
+    {
+      "name": "products",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int",
+          "nullable": false,
+          "isPrimaryKey": true,
+          "isIdentity": true,
+          "description": "Primary key - auto-incrementing unique identifier (referenced by order_items.product_id)"
+        },
+        {
+          "name": "name",
+          "type": "nvarchar(100)",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Product name"
+        },
+        {
+          "name": "category",
+          "type": "nvarchar(50)",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Product category (Electronics, Furniture, Office Supplies, Software, Apparel)"
+        },
+        {
+          "name": "price",
+          "type": "decimal",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Current product price"
+        },
+        {
+          "name": "stock_quantity",
+          "type": "int",
+          "nullable": true,
+          "isPrimaryKey": false,
+          "isIdentity": false,
+          "description": "Number of items in stock"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "nullable": true,
+          "isPrimaryKey": false,
+          "isIdentity": false
+        }
+      ],
+      "primaryKey": [
+        "id"
+      ],
+      "foreignKeys": [],
+      "indexes": [
+        {
+          "name": "PK__products__3213E83F4A43F8D1",
+          "columns": [
+            "id"
+          ],
+          "type": "clustered"
+        },
+        {
+          "name": "idx_products_category",
+          "columns": [
+            "category"
+          ],
+          "type": "nonclustered"
+        }
+      ],
+      "description": "Product catalog with name, category, price, and stock quantity"
+    },
+    {
+      "name": "query_memory",
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "nullable": false,
+          "isPrimaryKey": true,
+          "isIdentity": true
+        },
+        {
+          "name": "question_original",
+          "type": "nvarchar(1000)",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false
+        },
+        {
+          "name": "question_normalized",
+          "type": "nvarchar(1000)",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false
+        },
+        {
+          "name": "generated_sql",
+          "type": "nvarchar(-1)",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false
+        },
+        {
+          "name": "embedding_vector",
+          "type": "nvarchar(-1)",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false
+        },
+        {
+          "name": "created_at",
+          "type": "datetime2",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false
+        },
+        {
+          "name": "last_used_at",
+          "type": "datetime2",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false
+        },
+        {
+          "name": "usage_count",
+          "type": "int",
+          "nullable": false,
+          "isPrimaryKey": false,
+          "isIdentity": false
+        }
+      ],
+      "primaryKey": [
+        "id"
+      ],
+      "foreignKeys": [],
+      "indexes": [
+        {
+          "name": "PK_query_memory",
+          "columns": [
+            "id"
+          ],
+          "type": "clustered"
+        },
+        {
+          "name": "IX_query_memory_normalized_question",
+          "columns": [
+            "question_normalized"
+          ],
+          "type": "nonclustered"
+        },
+        {
+          "name": "IX_query_memory_popular_recent",
+          "columns": [
+            "usage_count",
+            "last_used_at"
+          ],
+          "type": "nonclustered"
+        },
+        {
+          "name": "IX_query_memory_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "type": "nonclustered"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "description": "order_items.product_id references products.id",
+      "from": "order_items.product_id",
+      "to": "products.id",
+      "type": "many-to-one"
+    },
+    {
+      "description": "order_items.order_id references orders.id",
+      "from": "order_items.order_id",
+      "to": "orders.id",
+      "type": "many-to-one"
+    },
+    {
+      "description": "orders.customer_id references customers.id",
+      "from": "orders.customer_id",
+      "to": "customers.id",
+      "type": "many-to-one"
+    }
+  ]
+}

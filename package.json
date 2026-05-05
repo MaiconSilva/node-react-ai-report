@@ -1,0 +1,19 @@
+{
+  "name": "ai-sql-reports",
+  "version": "1.0.0",
+  "description": "Natural language to SQL reports POC",
+  "scripts": {
+    "db:start": "docker-compose up -d",
+    "db:stop": "docker-compose down",
+    "db:logs": "docker-compose logs -f sqlserver",
+    "backend:install": "cd backend && npm install",
+    "backend:dev": "cd backend && npm run start:dev",
+    "frontend:install": "cd frontend && npm install",
+    "frontend:dev": "cd frontend && npm run dev",
+    "install:all": "npm run backend:install && npm run frontend:install",
+    "setup": "curl -X POST http://localhost:3000/setup"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
